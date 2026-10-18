@@ -141,3 +141,51 @@ document.getElementById("current-year").textContent =
 
 setLanguage("en");
 setTheme(false);
+
+const messageForm = document.getElementById("message-form");
+const formStatus = document.getElementById("form-status");
+
+if (messageForm && formStatus) {
+  messageForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const submitButton = messageForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending...";
+    formStatus.hidden = true;
+
+    try {
+      const response = await fetch(messageForm.action, {
+        method: "POST",
+        body: new FormData(messageForm),
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === "false" || result.success === false) {
+        throw new Error("Message could not be sent.");
+      }
+
+      formStatus.textContent =
+        "Thank you! Your message has been sent successfully.";
+      formStatus.style.color = "var(--accent)";
+      formStatus.hidden = false;
+
+      messageForm.reset();
+    } catch (error) {
+      formStatus.textContent =
+        "Sorry, your message could not be sent. Please try again.";
+      formStatus.style.color = "#ff6b6b";
+      formStatus.hidden = false;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Send Message";
+    }
+  });
+}
