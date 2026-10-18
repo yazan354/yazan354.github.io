@@ -144,6 +144,8 @@ setTheme(false);
 
 
 
+
+
 const messageForm = document.getElementById("message-form");
 const formStatus = document.getElementById("form-status");
 
@@ -151,7 +153,9 @@ if (messageForm && formStatus) {
   messageForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const button = messageForm.querySelector('button[type="submit"]');
+    const button = messageForm.querySelector(
+      'button[type="submit"]'
+    );
 
     button.disabled = true;
     button.textContent = "Sending...";
@@ -163,8 +167,8 @@ if (messageForm && formStatus) {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
+            Accept: "application/json",
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(
             Object.fromEntries(new FormData(messageForm))
@@ -172,22 +176,12 @@ if (messageForm && formStatus) {
         }
       );
 
-      const responseText = await response.text();
+      const result = await response.json();
 
-      let result;
-
-      try {
-        result = JSON.parse(responseText);
-      } catch {
+      if (!response.ok || !result.success) {
         throw new Error(
-          "FormSubmit returned an HTML page instead of JSON. " +
-          "Please check your website hosting and FormSubmit activation."
-        );
-      }
-
-      if (String(result.success) !== "true") {
-        throw new Error(
-          result.message || "Please check your FormSubmit settings."
+          result.message || result.error ||
+          `Request failed (${response.status})`
         );
       }
 
@@ -199,7 +193,10 @@ if (messageForm && formStatus) {
       messageForm.reset();
 
     } catch (error) {
-      formStatus.textContent = error.message;
+      console.error("Contact form error:", error);
+
+      formStatus.textContent =
+        "Message failed: " + error.message;
       formStatus.style.color = "#ff6b6b";
       formStatus.hidden = false;
 
@@ -209,3 +206,4 @@ if (messageForm && formStatus) {
     }
   });
 }
+
