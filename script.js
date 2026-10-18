@@ -142,6 +142,8 @@ document.getElementById("current-year").textContent =
 setLanguage("en");
 setTheme(false);
 
+
+
 const messageForm = document.getElementById("message-form");
 const formStatus = document.getElementById("form-status");
 
@@ -149,27 +151,44 @@ if (messageForm && formStatus) {
   messageForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const submitButton = messageForm.querySelector(
-      'button[type="submit"]'
-    );
+    const button = messageForm.querySelector('button[type="submit"]');
 
-    submitButton.disabled = true;
-    submitButton.textContent = "Sending...";
+    button.disabled = true;
+    button.textContent = "Sending...";
     formStatus.hidden = true;
 
     try {
-      const response = await fetch(messageForm.action, {
-        method: "POST",
-        body: new FormData(messageForm),
-        headers: {
-          Accept: "application/json"
+      const response = await fetch(
+        "https://formsubmit.co/ajax/yazankalbouneh19@gmail.com",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(
+            Object.fromEntries(new FormData(messageForm))
+          )
         }
-      });
+      );
 
-      const result = await response.json();
+      const responseText = await response.text();
 
-      if (!response.ok || result.success === "false" || result.success === false) {
-        throw new Error("Message could not be sent.");
+      let result;
+
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "FormSubmit returned an HTML page instead of JSON. " +
+          "Please check your website hosting and FormSubmit activation."
+        );
+      }
+
+      if (String(result.success) !== "true") {
+        throw new Error(
+          result.message || "Please check your FormSubmit settings."
+        );
       }
 
       formStatus.textContent =
@@ -178,14 +197,15 @@ if (messageForm && formStatus) {
       formStatus.hidden = false;
 
       messageForm.reset();
+
     } catch (error) {
-      formStatus.textContent =
-        "Sorry, your message could not be sent. Please try again.";
+      formStatus.textContent = error.message;
       formStatus.style.color = "#ff6b6b";
       formStatus.hidden = false;
+
     } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = "Send Message";
+      button.disabled = false;
+      button.textContent = "Send Message";
     }
   });
 }
